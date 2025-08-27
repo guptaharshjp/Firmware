@@ -740,6 +740,12 @@ void Copter::three_hz_loop()
 
     // check if avoidance should be enabled based on alt
     low_alt_avoidance();
+        // --- Custom altitude-based mode change ---
+    if (current_loc.alt > 1000) {   
+        if (flightmode->mode_number() != Mode::Number::LOITER) {
+            set_mode(Mode::Number::LOITER, ModeReason::SCRIPTING); // switch to LOITER mode
+        }
+    }
 }
 
 // ap_value calculates a 32-bit bitmask representing various pieces of
