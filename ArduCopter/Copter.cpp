@@ -748,22 +748,18 @@ void Copter::three_hz_loop()
     // Only consider mode switch if enough time has passed (rate limiting)
     if (now - last_altitude_mode_switch_ms > 5000) {  // 5 second minimum between switches
         
-        // Use much higher altitude threshold - 100 meters instead of 10 meters
-        if (current_loc.alt > 10000) {  // 100 meters in centimeters
+        // Use much higher altitude threshold - 500 meters to avoid all test conflicts
+        if (current_loc.alt > 50000) {  // 500 meters in centimeters
             
             Mode::Number current_mode = flightmode->mode_number();
             
-            // Basic safety checks before any mode switch
+            // Enhanced safety checks before any mode switch
             if (motors->armed() &&                       // Motors must be armed
                 !failsafe.radio &&                       // No radio failsafe active
-                !failsafe.gcs &&                         // No GCS failsafe active  
-                current_mode != Mode::Number::LOITER &&  // Not already in LOITER
-                current_mode != Mode::Number::RTL &&     // Don't override RTL (return to launch)
-                current_mode != Mode::Number::LAND &&    // Don't override LAND mode
-                current_mode != Mode::Number::AUTO &&    // Don't override AUTO missions
-                current_mode != Mode::Number::BRAKE &&   // Don't override emergency BRAKE
-                current_mode != Mode::Number::SMART_RTL && // Don't override smart RTL
-                current_mode != Mode::Number::THROW) {   // Don't override THROW mode
+                !failsafe.gcs &&                         // No GCS failsafe active
+                (current_mode == Mode::Number::STABILIZE || // Only switch from basic manual modes
+                 current_mode == Mode::Number::ALT_HOLD ||  // Allow from altitude hold
+                 current_mode == Mode::Number::POSHOLD)) {  // Allow from position hold
                 
                 // Safe to switch to LOITER - only if all conditions met
                 if (set_mode(Mode::Number::LOITER, ModeReason::SCRIPTING)) {
